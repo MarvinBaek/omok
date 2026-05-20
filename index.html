@@ -70,6 +70,114 @@
   .hidden { display: none !important; }
   #status { font-size: 14px; }
   #result-msg { text-align: center; min-height: 20px; color: #ffd54f; font-size: 13px; margin-top: 8px; }
+
+  /* 승리 통계 */
+  .score-box { display: flex; justify-content: space-around; padding: 4px 0; }
+  .score-item { text-align: center; }
+  .score-item .label { font-size: 12px; color: #999; }
+  .score-item .num { font-size: 24px; font-weight: bold; color: #ffd54f; }
+
+  /* 승리 모달 */
+  .modal-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0, 0, 0, 0.85);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    animation: fadeIn 0.3s ease;
+  }
+  .modal-overlay.hidden { display: none; }
+  .modal-content {
+    background: linear-gradient(135deg, #2a2a2a 0%, #1a1a1a 100%);
+    border: 2px solid #ffd54f;
+    border-radius: 16px;
+    padding: 32px 24px;
+    max-width: 90%;
+    width: 400px;
+    text-align: center;
+    box-shadow: 0 0 40px rgba(255, 213, 79, 0.3);
+    animation: popIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  .modal-trophy {
+    font-size: 72px;
+    margin-bottom: 8px;
+    animation: bounce 1s ease infinite;
+  }
+  .modal-title {
+    font-size: 36px;
+    font-weight: bold;
+    background: linear-gradient(90deg, #ffd54f, #ff9800, #ffd54f);
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: shine 2s linear infinite;
+    margin: 8px 0;
+  }
+  .modal-subtitle {
+    font-size: 16px;
+    color: #ccc;
+    margin-bottom: 20px;
+  }
+  .modal-stats {
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 8px;
+    padding: 12px;
+    margin: 16px 0;
+    font-size: 14px;
+    color: #aaa;
+  }
+  .modal-buttons {
+    display: flex;
+    gap: 8px;
+    margin-top: 20px;
+  }
+  .modal-buttons button {
+    flex: 1;
+    padding: 14px;
+    font-size: 15px;
+    font-weight: 500;
+  }
+  .btn-big-primary {
+    background: linear-gradient(135deg, #c84a3a, #ff6347);
+    border: none;
+    color: white;
+  }
+  .btn-big-primary:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(200, 74, 58, 0.4); }
+  .btn-big-secondary {
+    background: #333;
+    border: 1px solid #555;
+  }
+
+  /* 컨페티 */
+  .confetti {
+    position: fixed;
+    width: 10px;
+    height: 10px;
+    pointer-events: none;
+    z-index: 999;
+    animation: confettiFall linear forwards;
+  }
+
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes popIn {
+    0% { transform: scale(0.5); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+  @keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-15px); }
+  }
+  @keyframes shine {
+    0% { background-position: 0% center; }
+    100% { background-position: 200% center; }
+  }
+  @keyframes confettiFall {
+    0% { transform: translateY(-100vh) rotate(0deg); opacity: 1; }
+    100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+  }
 </style>
 </head>
 <body>
@@ -108,6 +216,21 @@
       </div>
     </details>
 
+    <!-- 점수판 -->
+    <div class="panel">
+      <div class="score-box">
+        <div class="score-item">
+          <div class="label">👑 호스트</div>
+          <div class="num" id="score-host">0</div>
+        </div>
+        <div class="score-item" style="align-self: center; font-size: 16px; color: #666;">VS</div>
+        <div class="score-item">
+          <div class="label">👥 시청자</div>
+          <div class="num" id="score-viewer">0</div>
+        </div>
+      </div>
+    </div>
+
     <div class="panel panel-row">
       <span id="role-label" style="font-weight: 500;"></span>
       <span id="status">대기 중</span>
@@ -136,6 +259,25 @@
       </div>
     </div>
     <p id="result-msg"></p>
+  </div>
+</div>
+
+<!-- 승리 모달 -->
+<div id="win-modal" class="modal-overlay hidden">
+  <div class="modal-content">
+    <div class="modal-trophy" id="modal-trophy">🏆</div>
+    <div class="modal-title" id="modal-title">호스트 승리!</div>
+    <div class="modal-subtitle" id="modal-subtitle">5목 완성!</div>
+    <div class="modal-stats" id="modal-stats">
+      이번 시즌: 호스트 0승 — 시청자 0승
+    </div>
+    <div class="modal-buttons" id="modal-buttons-host">
+      <button class="btn-big-secondary" id="btn-modal-close">결과 보기</button>
+      <button class="btn-big-primary" id="btn-modal-newgame">🔄 새 게임</button>
+    </div>
+    <div class="modal-buttons" id="modal-buttons-viewer" style="display:none;">
+      <button class="btn-big-secondary" id="btn-modal-close-v" style="width: 100%;">닫기 (호스트가 새 게임 시작 대기)</button>
+    </div>
   </div>
 </div>
 
@@ -179,6 +321,9 @@ let localTimer = null;
 let forbiddenSpots = [];
 let presenceRef = null;
 let viewerCount = 0;
+let winLine = []; // 승리한 5목 좌표 [[x,y], ...]
+let scoreHost = 0;
+let scoreViewer = 0;
 
 // ===== Firebase 연결 확인 =====
 db.ref('.info/connected').on('value', (snap) => {
@@ -260,7 +405,10 @@ function createRoom() {
       renju: renjuRule,
       gameOver: false,
       voteDeadline: 0,
-      winner: 0
+      winner: 0,
+      winLine: '[]',
+      scoreHost: 0,
+      scoreViewer: 0
     }
   }).then(() => {
     console.log('[방 만들기] 성공!');
@@ -319,6 +467,7 @@ function enterGame() {
 function onRoomUpdate(snap) {
   const data = snap.val();
   if (!data) return;
+  const wasGameOver = gameOver;
   board = deserializeBoard(data.board);
   turn = data.turn || 1;
   votes = data.votes || {};
@@ -327,6 +476,13 @@ function onRoomUpdate(snap) {
   voteTime = meta.voteTime || 20;
   renjuRule = !!meta.renju;
   voteDeadline = meta.voteDeadline || 0;
+  winLine = meta.winLine ? JSON.parse(meta.winLine) : [];
+  scoreHost = meta.scoreHost || 0;
+  scoreViewer = meta.scoreViewer || 0;
+
+  // 점수 UI 업데이트
+  document.getElementById('score-host').textContent = scoreHost;
+  document.getElementById('score-viewer').textContent = scoreViewer;
 
   // 호스트 설정 UI 동기화
   if (isHost) {
@@ -344,6 +500,15 @@ function onRoomUpdate(snap) {
     startLocalTimer();
   } else {
     stopLocalTimer();
+  }
+
+  // 게임 종료 → 모달 표시 (방금 끝났을 때만)
+  if (gameOver && meta.winner && !wasGameOver) {
+    showWinModal(meta.winner);
+  }
+  // 새 게임 시작되면 모달 닫기
+  if (!gameOver && wasGameOver) {
+    hideWinModal();
   }
 
   // 게임 종료 표시
@@ -383,15 +548,19 @@ canvas.addEventListener('click', (e) => {
 // ===== 호스트: 돌 두기 =====
 function hostPlaceStone(x, y, color) {
   board[x][y] = color;
-  const win = checkWin(x, y, color);
+  const winInfo = checkWinWithLine(x, y, color);
   const updates = {
     board: serializeBoard(board),
     turn: color === 1 ? 2 : 1,
     votes: {}
   };
-  if (win) {
+  if (winInfo) {
     updates['meta/gameOver'] = true;
     updates['meta/winner'] = color;
+    updates['meta/winLine'] = JSON.stringify(winInfo);
+    // 점수 누적
+    if (color === 1) updates['meta/scoreHost'] = scoreHost + 1;
+    else updates['meta/scoreViewer'] = scoreViewer + 1;
   } else if (updates.turn === 2) {
     // 시청자 투표 시작 → 마감시간 기록
     updates['meta/voteDeadline'] = Date.now() + voteTime * 1000;
@@ -445,6 +614,60 @@ function stopLocalTimer() {
   if (localTimer) { clearInterval(localTimer); localTimer = null; }
 }
 
+// ===== 승리 모달 =====
+function showWinModal(winner) {
+  const modal = document.getElementById('win-modal');
+  const trophy = document.getElementById('modal-trophy');
+  const title = document.getElementById('modal-title');
+  const subtitle = document.getElementById('modal-subtitle');
+  const stats = document.getElementById('modal-stats');
+
+  if (winner === 1) {
+    trophy.textContent = '👑';
+    title.textContent = '호스트 승리!';
+    subtitle.textContent = '흑돌이 5목을 완성했습니다';
+  } else {
+    trophy.textContent = '🎉';
+    title.textContent = '시청자 승리!';
+    subtitle.textContent = '집단지성으로 5목 완성!';
+  }
+  stats.innerHTML = `이번 시즌 전적<br><span style="font-size:18px; color:#ffd54f;">👑 호스트 ${scoreHost}승 — 시청자 ${scoreViewer}승 👥</span>`;
+
+  // 호스트/시청자에 따라 버튼 다르게
+  document.getElementById('modal-buttons-host').style.display = isHost ? 'flex' : 'none';
+  document.getElementById('modal-buttons-viewer').style.display = isHost ? 'none' : 'flex';
+
+  modal.classList.remove('hidden');
+  fireConfetti();
+}
+function hideWinModal() {
+  document.getElementById('win-modal').classList.add('hidden');
+}
+function fireConfetti() {
+  const colors = ['#ffd54f', '#ff6347', '#4caf50', '#2196f3', '#e91e63', '#ff9800'];
+  for (let i = 0; i < 80; i++) {
+    setTimeout(() => {
+      const c = document.createElement('div');
+      c.className = 'confetti';
+      c.style.left = Math.random() * 100 + 'vw';
+      c.style.background = colors[Math.floor(Math.random() * colors.length)];
+      c.style.animationDuration = (2 + Math.random() * 2) + 's';
+      c.style.width = (6 + Math.random() * 8) + 'px';
+      c.style.height = c.style.width;
+      c.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
+      document.body.appendChild(c);
+      setTimeout(() => c.remove(), 4000);
+    }, i * 30);
+  }
+}
+
+document.getElementById('btn-modal-close').addEventListener('click', hideWinModal);
+document.getElementById('btn-modal-close-v').addEventListener('click', hideWinModal);
+document.getElementById('btn-modal-newgame').addEventListener('click', () => {
+  hideWinModal();
+  resetGame();
+});
+
 // ===== 새 게임 =====
 function resetGame() {
   board = Array(SIZE).fill(null).map(() => Array(SIZE).fill(0));
@@ -454,9 +677,11 @@ function resetGame() {
     votes: {},
     'meta/gameOver': false,
     'meta/winner': 0,
-    'meta/voteDeadline': 0
+    'meta/voteDeadline': 0,
+    'meta/winLine': '[]'
   });
-  document.getElementById('result-msg').textContent = '새 게임 시작!';
+  document.getElementById('result-msg').textContent = '🎮 새 게임 시작!';
+  hideWinModal();
 }
 
 // ===== 보드 직렬화 =====
@@ -502,6 +727,28 @@ function drawBoard() {
   for (let x = 0; x < SIZE; x++) {
     for (let y = 0; y < SIZE; y++) {
       if (board[x][y]) drawStone(x, y, board[x][y]);
+    }
+  }
+  // 승리 라인 하이라이트
+  if (gameOver && winLine.length > 0) {
+    winLine.forEach(([x, y]) => {
+      const cx = CELL * (x + 1), cy = CELL * (y + 1);
+      ctx.strokeStyle = '#ffd54f';
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.arc(cx, cy, CELL * 0.48, 0, Math.PI * 2);
+      ctx.stroke();
+    });
+    // 라인 그리기
+    if (winLine.length >= 2) {
+      const [x1, y1] = winLine[0];
+      const [x2, y2] = winLine[winLine.length - 1];
+      ctx.strokeStyle = 'rgba(255, 213, 79, 0.6)';
+      ctx.lineWidth = 6;
+      ctx.beginPath();
+      ctx.moveTo(CELL * (x1 + 1), CELL * (y1 + 1));
+      ctx.lineTo(CELL * (x2 + 1), CELL * (y2 + 1));
+      ctx.stroke();
     }
   }
   if (turn === 2 && !gameOver) {
@@ -568,16 +815,26 @@ function countInDir(x, y, dx, dy, color) {
   return count;
 }
 function checkWin(x, y, color) {
+  return !!checkWinWithLine(x, y, color);
+}
+// 승리 시 5목 좌표 배열 반환, 없으면 null
+function checkWinWithLine(x, y, color) {
   const dirs = [[1,0],[0,1],[1,1],[1,-1]];
   for (const [dx, dy] of dirs) {
-    const c = 1 + countInDir(x, y, dx, dy, color) + countInDir(x, y, -dx, -dy, color);
-    if (renjuRule && color === 1) {
-      if (c === 5) return true;
-    } else {
-      if (c >= 5) return true;
+    const forward = countInDir(x, y, dx, dy, color);
+    const backward = countInDir(x, y, -dx, -dy, color);
+    const c = 1 + forward + backward;
+    const wins = (renjuRule && color === 1) ? (c === 5) : (c >= 5);
+    if (wins) {
+      // 5목 좌표 모으기 (그 라인 전체)
+      const line = [];
+      for (let i = -backward; i <= forward; i++) {
+        line.push([x + dx*i, y + dy*i]);
+      }
+      return line;
     }
   }
-  return false;
+  return null;
 }
 function checkOverline(x, y, color) {
   const dirs = [[1,0],[0,1],[1,1],[1,-1]];

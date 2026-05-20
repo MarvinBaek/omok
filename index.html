@@ -191,6 +191,16 @@
       <button id="btn-host" class="primary" disabled>방 만들기 (호스트)</button>
       <button id="btn-join-toggle" disabled>방 참여 (시청자)</button>
     </div>
+    <div id="host-pwd-area" class="hidden" style="margin-top: 12px;">
+      <p class="muted" style="margin: 0 0 6px;">🔒 호스트 비밀번호 입력:</p>
+      <input id="pwd-input" type="password" placeholder="비밀번호" autocomplete="off" />
+      <div style="height: 8px"></div>
+      <div style="display: flex; gap: 8px;">
+        <button id="btn-pwd-cancel" style="flex: 1;">취소</button>
+        <button id="btn-pwd-submit" class="primary" style="flex: 2;">방 만들기</button>
+      </div>
+      <p id="pwd-error" style="color: #ff6b6b; font-size: 12px; margin: 8px 0 0; min-height: 16px;"></p>
+    </div>
     <div id="join-area" class="hidden">
       <input id="room-input" type="text" placeholder="방 ID 입력 (예: abc123)" />
       <div style="height: 8px"></div>
@@ -339,7 +349,21 @@ db.ref('.info/connected').on('value', (snap) => {
 });
 
 // ===== UI 핸들러 =====
-document.getElementById('btn-host').addEventListener('click', createRoom);
+document.getElementById('btn-host').addEventListener('click', () => {
+  // 비밀번호 입력 영역 표시
+  document.getElementById('host-pwd-area').classList.remove('hidden');
+  document.getElementById('join-area').classList.add('hidden');
+  document.getElementById('pwd-input').focus();
+});
+document.getElementById('btn-pwd-cancel').addEventListener('click', () => {
+  document.getElementById('host-pwd-area').classList.add('hidden');
+  document.getElementById('pwd-input').value = '';
+  document.getElementById('pwd-error').textContent = '';
+});
+document.getElementById('btn-pwd-submit').addEventListener('click', tryCreateRoom);
+document.getElementById('pwd-input').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') tryCreateRoom();
+});
 document.getElementById('btn-join-toggle').addEventListener('click', () => {
   document.getElementById('join-area').classList.toggle('hidden');
 });
@@ -389,14 +413,61 @@ if (urlRoom) {
   }, 500);
 }
 
+// ===== 비밀번호 검증 + 방 생성 =====
+// SHA-256 해시 (비밀번호: ticktok2026, salt: omok-marvin-2026-salt-xyz)
+const HOST_PWD_HASH = 'fb3198e9c360deaadfda946a430eb7eb582bca5c0df8087e3dfe27bbd8ede991';
+const PWD_SALT = 'omok-marvin-2026-salt-xyz';
+
+async function sha256(str) {
+  const buf = new TextEncoder().encode(str);
+  const hash = await crypto.subtle.digest('SHA-256', buf);
+  return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+let pwdAttempts = 0;
+let pwdLockedUntil = 0;
+
+async function tryCreateRoom() {
+  // 잠금 확인
+  if (Date.now() < pwdLockedUntil) {
+    const left = Math.ceil((pwdLockedUntil - Date.now()) / 1000);
+    document.getElementById('pwd-error').textContent = `잠금됨. ${left}초 후 다시 시도하세요.`;
+    return;
+  }
+  const pwd = document.getElementById('pwd-input').value;
+  if (!pwd) {
+    document.getElementById('pwd-error').textContent = '비밀번호를 입력하세요';
+    return;
+  }
+  const hash = await sha256(pwd + PWD_SALT);
+  if (hash !== HOST_PWD_HASH) {
+    pwdAttempts++;
+    if (pwdAttempts >= 5) {
+      pwdLockedUntil = Date.now() + 60000; // 1분 잠금
+      pwdAttempts = 0;
+      document.getElementById('pwd-error').textContent = '5회 실패. 1분간 잠금됩니다.';
+    } else {
+      document.getElementById('pwd-error').textContent = `비밀번호가 틀렸습니다 (${pwdAttempts}/5)`;
+    }
+    document.getElementById('pwd-input').value = '';
+    return;
+  }
+  // 성공! 방 생성
+  pwdAttempts = 0;
+  document.getElementById('pwd-error').textContent = '';
+  createRoom(hash);
+}
+
 // ===== 방 생성 =====
-function createRoom() {
+function createRoom(authHash) {
   roomId = Math.random().toString(36).slice(2, 8);
   isHost = true;
   roomRef = db.ref('rooms/' + roomId);
   console.log('[방 만들기] 시도 - 방 ID:', roomId);
-  // 초기 상태 작성
+  // 초기 상태 작성 (auth 필드 포함)
   roomRef.set({
+    auth: authHash,
+    createdAt: firebase.database.ServerValue.TIMESTAMP,
     board: serializeBoard(board),
     turn: 1,
     votes: {},

@@ -258,6 +258,7 @@
         <code id="share-link" style="flex: 1; font-size: 11px;"></code>
         <button id="btn-copy-link" style="padding: 6px 12px; font-size: 12px;">링크 복사</button>
       </div>
+      <p class="muted" style="margin: 8px 0 0; font-size: 11px; color: #ff9800;">⚠️ 이 탭을 닫거나 새로고침하면 방이 즉시 삭제됩니다</p>
     </div>
 
     <canvas id="board" width="600" height="600"></canvas>
@@ -413,6 +414,15 @@ if (urlRoom) {
   }, 500);
 }
 
+// 호스트가 탭 닫으려 할 때 경고
+window.addEventListener('beforeunload', (e) => {
+  if (isHost && roomRef) {
+    e.preventDefault();
+    e.returnValue = '방이 삭제됩니다. 정말 나가시겠습니까?';
+    return e.returnValue;
+  }
+});
+
 // ===== 비밀번호 검증 + 방 생성 =====
 // SHA-256 해시 (비밀번호: ticktok2026, salt: omok-marvin-2026-salt-xyz)
 const HOST_PWD_HASH = 'fb3198e9c360deaadfda946a430eb7eb582bca5c0df8087e3dfe27bbd8ede991';
@@ -515,6 +525,9 @@ function enterGame() {
     document.getElementById('my-room-id').textContent = roomId;
     const link = window.location.origin + window.location.pathname + '?room=' + roomId;
     document.getElementById('share-link').textContent = link;
+    // 호스트가 나가면 방 자동 삭제 (브라우저/탭 닫힘, 네트워크 끊김 모두 감지)
+    roomRef.onDisconnect().remove();
+    console.log('[자동삭제] 호스트 연결 끊기면 방 삭제됨');
   } else {
     document.getElementById('settings-panel').classList.add('hidden');
   }
@@ -537,7 +550,15 @@ function enterGame() {
 // ===== Firebase 상태 변경 수신 =====
 function onRoomUpdate(snap) {
   const data = snap.val();
-  if (!data) return;
+  if (!data) {
+    // 방이 삭제됨 (호스트가 나감)
+    if (!isHost && roomRef) {
+      stopLocalTimer();
+      alert('🚪 호스트가 방을 떠났습니다. 방이 종료되었습니다.');
+      window.location.href = window.location.origin + window.location.pathname;
+    }
+    return;
+  }
   const wasGameOver = gameOver;
   board = deserializeBoard(data.board);
   turn = data.turn || 1;

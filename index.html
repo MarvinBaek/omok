@@ -88,14 +88,6 @@
       <div style="height: 8px"></div>
       <button id="btn-join" style="width: 100%">접속</button>
     </div>
-    <div id="room-id-display" class="hidden" style="margin-top: 12px;">
-      <p class="muted" style="margin: 0 0 4px;">내 방 ID — 시청자에게 공유:</p>
-      <div style="display: flex; gap: 8px; align-items: center;">
-        <code id="my-room-id" style="flex: 1;"></code>
-        <button id="btn-copy" style="padding: 6px 12px; font-size: 12px;">복사</button>
-      </div>
-      <p class="muted" style="margin: 8px 0 0; font-size: 12px;">또는 이 링크 공유:<br /><code id="share-link" style="font-size: 11px;"></code></p>
-    </div>
   </div>
 
   <!-- 게임 영역 -->
@@ -119,6 +111,20 @@
     <div class="panel panel-row">
       <span id="role-label" style="font-weight: 500;"></span>
       <span id="status">대기 중</span>
+    </div>
+
+    <!-- 호스트용 방 ID 표시 (게임 화면 안) -->
+    <div id="room-id-display" class="panel hidden" style="background: #3a2a1a; border: 1px solid #c84a3a;">
+      <p class="muted" style="margin: 0 0 6px; color: #ffb;">📢 시청자에게 공유할 방 ID:</p>
+      <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 8px;">
+        <code id="my-room-id" style="flex: 1; font-size: 18px; font-weight: bold; color: #ffd54f;"></code>
+        <button id="btn-copy" style="padding: 6px 12px; font-size: 12px;">ID 복사</button>
+      </div>
+      <p class="muted" style="margin: 0; font-size: 12px;">또는 링크 공유:</p>
+      <div style="display: flex; gap: 8px; align-items: center; margin-top: 4px;">
+        <code id="share-link" style="flex: 1; font-size: 11px;"></code>
+        <button id="btn-copy-link" style="padding: 6px 12px; font-size: 12px;">링크 복사</button>
+      </div>
     </div>
 
     <canvas id="board" width="600" height="600"></canvas>
@@ -200,7 +206,14 @@ document.getElementById('btn-copy').addEventListener('click', () => {
   navigator.clipboard.writeText(roomId);
   const b = document.getElementById('btn-copy');
   b.textContent = '복사됨!';
-  setTimeout(() => b.textContent = '복사', 1500);
+  setTimeout(() => b.textContent = 'ID 복사', 1500);
+});
+document.getElementById('btn-copy-link').addEventListener('click', () => {
+  const link = window.location.origin + window.location.pathname + '?room=' + roomId;
+  navigator.clipboard.writeText(link);
+  const b = document.getElementById('btn-copy-link');
+  b.textContent = '복사됨!';
+  setTimeout(() => b.textContent = '링크 복사', 1500);
 });
 document.getElementById('btn-reset').addEventListener('click', () => {
   if (!isHost) return;
@@ -236,6 +249,7 @@ function createRoom() {
   roomId = Math.random().toString(36).slice(2, 8);
   isHost = true;
   roomRef = db.ref('rooms/' + roomId);
+  console.log('[방 만들기] 시도 - 방 ID:', roomId);
   // 초기 상태 작성
   roomRef.set({
     board: serializeBoard(board),
@@ -249,9 +263,11 @@ function createRoom() {
       winner: 0
     }
   }).then(() => {
+    console.log('[방 만들기] 성공!');
     enterGame();
   }).catch(err => {
-    alert('방 생성 실패: ' + err.message + '\n\n보안 규칙을 확인하세요.');
+    console.error('[방 만들기] 실패:', err);
+    alert('❌ 방 생성 실패\n\n사유: ' + err.message + '\n\n해결방법: Firebase 콘솔에서 Realtime Database → 규칙 탭을 확인하세요.');
   });
 }
 

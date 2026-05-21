@@ -11,15 +11,3 @@ const firebaseConfig = {
 
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
-
-// ===== 호스트 비밀번호 (SHA-256 + salt 해시) =====
-// 원본 비밀번호: ticktok2026
-const HOST_PWD_HASH = 'fb3198e9c360deaadfda946a430eb7eb582bca5c0df8087e3dfe27bbd8ede991';
-const PWD_SALT = 'omok-marvin-2026-salt-xyz';
-
-// SHA-256 헬퍼
-async function sha256(str) {
-  const buf = new TextEncoder().encode(str);
-  const hash = await crypto.subtle.digest('SHA-256', buf);
-  return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, '0')).join('');
-}

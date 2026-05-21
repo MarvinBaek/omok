@@ -1,0 +1,260 @@
+/* ===== 기본 ===== */
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  padding: 16px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans KR", sans-serif;
+  background: #1a1a1a;
+  color: #f0f0f0;
+  min-height: 100vh;
+}
+.container { max-width: 700px; margin: 0 auto; }
+h1 { font-size: 20px; margin: 0 0 12px; }
+
+/* ===== 패널 ===== */
+.panel {
+  background: #2a2a2a;
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin-bottom: 12px;
+}
+.panel-row { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+
+/* ===== 버튼 ===== */
+button {
+  background: #444;
+  color: #f0f0f0;
+  border: 1px solid #555;
+  padding: 10px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+button:hover { background: #555; }
+button:active { transform: scale(0.97); }
+button:disabled { opacity: 0.4; cursor: not-allowed; }
+button.primary { background: #c84a3a; border-color: #c84a3a; }
+button.primary:hover { background: #d85a4a; }
+
+/* ===== 입력 ===== */
+input[type="text"], input[type="password"] {
+  background: #1a1a1a;
+  color: #f0f0f0;
+  border: 1px solid #555;
+  padding: 12px;
+  border-radius: 6px;
+  font-size: 16px; /* iOS zoom 방지 - 16px 이상 필요 */
+  width: 100%;
+}
+input[type="text"]:focus, input[type="password"]:focus {
+  outline: none;
+  border-color: #c84a3a;
+}
+
+code {
+  background: #1a1a1a;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 13px;
+  word-break: break-all;
+}
+
+/* ===== 오목판 ===== */
+canvas {
+  width: 100%;
+  height: auto;
+  background: #E8C896;
+  border-radius: 8px;
+  cursor: pointer;
+  display: block;
+  touch-action: none; /* 모바일에서 스크롤 방지 */
+}
+
+/* ===== 유틸 ===== */
+.muted { color: #999; font-size: 13px; }
+.row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
+.row > * { flex: 1; min-width: 80px; }
+.hidden { display: none !important; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); border: 0; }
+
+details summary {
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 14px;
+  padding: 4px 0;
+  -webkit-tap-highlight-color: transparent;
+}
+details > div { margin-top: 12px; display: flex; flex-direction: column; gap: 10px; }
+label { display: flex; align-items: center; gap: 10px; font-size: 13px; }
+input[type="range"] { flex: 1; }
+
+#status { font-size: 14px; }
+#result-msg { text-align: center; min-height: 20px; color: #ffd54f; font-size: 13px; margin-top: 8px; }
+
+/* ===== 점수판 ===== */
+.score-box { display: flex; justify-content: space-around; padding: 4px 0; }
+.score-item { text-align: center; }
+.score-item .label { font-size: 12px; color: #999; }
+.score-item .num { font-size: 24px; font-weight: bold; color: #ffd54f; }
+
+/* ===== 승리 모달 ===== */
+.modal-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0, 0, 0, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.3s ease;
+  padding: 16px;
+}
+.modal-overlay.hidden { display: none; }
+.modal-content {
+  background: linear-gradient(135deg, #2a2a2a 0%, #1a1a1a 100%);
+  border: 2px solid #ffd54f;
+  border-radius: 16px;
+  padding: 32px 24px;
+  max-width: 100%;
+  width: 400px;
+  text-align: center;
+  box-shadow: 0 0 40px rgba(255, 213, 79, 0.3);
+  animation: popIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.modal-trophy {
+  font-size: 72px;
+  margin-bottom: 8px;
+  animation: bounce 1s ease infinite;
+}
+.modal-title {
+  font-size: 36px;
+  font-weight: bold;
+  background: linear-gradient(90deg, #ffd54f, #ff9800, #ffd54f);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: shine 2s linear infinite;
+  margin: 8px 0;
+}
+.modal-subtitle {
+  font-size: 16px;
+  color: #ccc;
+  margin-bottom: 20px;
+}
+.modal-stats {
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 8px;
+  padding: 12px;
+  margin: 16px 0;
+  font-size: 14px;
+  color: #aaa;
+}
+.modal-buttons {
+  display: flex;
+  gap: 8px;
+  margin-top: 20px;
+}
+.modal-buttons button {
+  flex: 1;
+  padding: 14px;
+  font-size: 15px;
+  font-weight: 500;
+}
+.btn-big-primary {
+  background: linear-gradient(135deg, #c84a3a, #ff6347);
+  border: none;
+  color: white;
+}
+.btn-big-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(200, 74, 58, 0.4);
+}
+.btn-big-secondary {
+  background: #333;
+  border: 1px solid #555;
+}
+
+/* ===== 컨페티 ===== */
+.confetti {
+  position: fixed;
+  width: 10px;
+  height: 10px;
+  pointer-events: none;
+  z-index: 999;
+  animation: confettiFall linear forwards;
+}
+
+/* ===== 애니메이션 ===== */
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes popIn {
+  0% { transform: scale(0.5); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-15px); }
+}
+@keyframes shine {
+  0% { background-position: 0% center; }
+  100% { background-position: 200% center; }
+}
+@keyframes confettiFall {
+  0% { transform: translateY(-100vh) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+}
+
+/* ===== 모바일 반응형 (768px 이하) ===== */
+@media (max-width: 768px) {
+  body { padding: 8px; }
+  h1 { font-size: 17px; margin: 0 0 8px; }
+  .panel { padding: 10px 12px; margin-bottom: 8px; }
+
+  /* 버튼 더 크게 (터치 타겟 최소 44px) */
+  button {
+    padding: 12px 14px;
+    font-size: 15px;
+    min-height: 44px;
+  }
+
+  /* 입력창 더 크게 */
+  input[type="text"], input[type="password"] {
+    padding: 14px;
+    min-height: 48px;
+  }
+
+  /* 점수판 작게 */
+  .score-item .num { font-size: 20px; }
+  .score-item .label { font-size: 11px; }
+
+  /* 모달 작게 */
+  .modal-content { padding: 24px 16px; }
+  .modal-trophy { font-size: 56px; }
+  .modal-title { font-size: 28px; }
+  .modal-subtitle { font-size: 14px; }
+  .modal-buttons button { padding: 12px; font-size: 14px; }
+
+  /* row 버튼 한 줄에 너무 많이 안 들어가게 */
+  .row { gap: 6px; }
+  .row > * { min-width: 0; }
+
+  /* code 텍스트 짧게 */
+  code { font-size: 12px; padding: 4px 6px; }
+}
+
+/* ===== 매우 작은 폰 (400px 이하) ===== */
+@media (max-width: 400px) {
+  h1 { font-size: 16px; }
+  .modal-title { font-size: 24px; }
+  .modal-trophy { font-size: 48px; }
+  #share-link { font-size: 10px !important; }
+}
+
+/* ===== 가로 모드 (높이 작을 때) ===== */
+@media (max-height: 500px) and (orientation: landscape) {
+  body { padding: 4px; }
+  h1 { display: none; } /* 가로모드에선 제목 숨김 */
+  .panel { padding: 6px 10px; margin-bottom: 6px; }
+}
